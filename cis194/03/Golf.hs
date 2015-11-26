@@ -40,7 +40,7 @@ histogram xs = s ++ unlines [replicate 10 '=', ['0'..'9']]
 
 		-- visual representation of the stars portion of the histogram
 		s :: String
-		s = unlines $ reverse $ rowStars xs'
+		s = unlines $ rowStars (maximum xs') xs'
 
 -- function takes a list of things we want to count
 -- plus a list of sorted & grouped things (possibly with some missing)
@@ -49,17 +49,14 @@ histogram xs = s ++ unlines [replicate 10 '=', ['0'..'9']]
 -- handling this case would require extra code...
 f :: Eq a => [a] -> [[a]] -> [Int]
 f (x:xs) (x2@(y:_):xs2)
-	| x == y = length x2 : f xs xs2
+	| x == y = genericLength x2 : f xs xs2
 	| otherwise = 0 : f xs (x2:xs2)
 f xs _ = replicate (length xs) 0
 
-rowStars :: (Num a, Eq a) => [a] -> [String]
-rowStars xs
-	| sum xs == 0 = []
-	| otherwise = map fst x : rowStars (map snd x)
-	where
-		x = map numToStar xs
+rowStars :: (Num a, Eq a, Ord a) => a -> [a] -> [String]
+rowStars 0 _ = []
+rowStars i xs = map (toStar . (>= i)) xs : rowStars (i - 1) xs
 
-numToStar :: (Num a, Eq a) => a -> (Char, a)
-numToStar 0 = (' ', 0)
-numToStar x = ('*', x - 1)
+toStar :: Bool -> Char
+toStar False = ' '
+toStar True = '*'
