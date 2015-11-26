@@ -1,9 +1,7 @@
 module Golf where
 
-import Control.Arrow ((&&&))
 import Data.List
 import Data.Monoid
-import Data.Ord (comparing)
 
 {----------------------------------------------------------------------------------------------------{
                                                                       | Exercise 1
@@ -36,23 +34,24 @@ localMaxima _ = []
 histogram :: [Integer] -> String
 histogram xs = s ++ unlines [replicate 10 '=', ['0'..'9']]
 	where
-		-- known numbers and their quantity
-		xs' :: [(Integer, Int)]
-		xs' = map (head &&& length) $ groupBy (==) $ sort xs
-
-		-- missing numbers
-		m :: [(Integer, Int)]
-		m = zip ([0..9] \\ xs) (repeat 0)
-
-		-- ditch the tuple and just give us the number counts
-		c :: [Int]
-		c = map snd $ sortBy (comparing fst) $ xs' ++ m
-		-- note that `sortBy (comparing fst)` should be comparable to `sortOn fst`...
-		-- but sortOn wasn't available in my version of GHC
+		-- how many times the numbers 0-9 appear in the list
+		xs' :: [Int]
+		xs' = f [0..9] $ groupBy (==) $ sort xs
 
 		-- visual representation of the stars portion of the histogram
 		s :: String
-		s = unlines $ reverse $ rowStars c
+		s = unlines $ reverse $ rowStars xs'
+
+-- function takes a list of things we want to count
+-- plus a list of sorted & grouped things (possibly with some missing)
+-- returns how many times each element from the first list appears in the second
+-- note that this will fail if the 2nd list contains empty lists like [[1], [], [5, 5]]
+-- handling this case would require extra code...
+f :: Eq a => [a] -> [[a]] -> [Int]
+f (x:xs) (x2@(y:_):xs2)
+	| x == y = length x2 : f xs xs2
+	| otherwise = 0 : f xs (x2:xs2)
+f xs _ = replicate (length xs) 0
 
 rowStars :: (Num a, Eq a) => [a] -> [String]
 rowStars xs
